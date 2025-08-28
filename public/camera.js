@@ -4,7 +4,9 @@
 
 
 function setupCamera() {
-   capture = createCapture(VIDEO, ()=>{
+   capture = createCapture({
+    video: { facingMode: { ideal: "environment" } }
+   }, ()=>{
     started = true;
    });
 
@@ -12,6 +14,7 @@ function setupCamera() {
    capture.hide();
 
    console.log('Camera initialized with size:', capture.width, 'x', capture.height);
+
 }
 
 
