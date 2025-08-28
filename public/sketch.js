@@ -7,10 +7,17 @@ let overlayImg = null; // Will hold the output image from the API
 let autoMode = false;
 let lastRun = 0;
 const INTERVAL_MS = 1000; // 1 fps when auto mode is on
+let canvasAspect = 4 / 3; // Default aspect ratio
+let deviceAspect = window.innerWidth / window.innerHeight;
 
 function setup() {
-  // Smaller canvas keeps payloads light; adjust as needed
-  createCanvas(480, 360);
+  // Calculate device aspect ratio
+  deviceAspect = window.innerWidth / window.innerHeight;
+  // Choose a base width (downscaled for performance)
+  let baseWidth = 480;
+  let baseHeight = Math.round(baseWidth / deviceAspect);
+  createCanvas(baseWidth, baseHeight);
+  canvasAspect = baseWidth / baseHeight;
 
   // Rear camera if available
   capture = createCapture({
@@ -46,10 +53,29 @@ function setup() {
 function draw() {
     if(!started) return
   background(0);
-  image(capture, 0, 0, width, height);
-  // Draw overlay image if available
+
+  // Draw camera and overlays with correct aspect
+  // Calculate the largest centered crop from capture to fit canvas aspect
+  let camAspect = capture.width / capture.height;
+  let drawW, drawH, sx, sy, sw, sh;
+  if (camAspect > canvasAspect) {
+    // Camera is wider than canvas: crop width
+    sh = capture.height;
+    sw = sh * canvasAspect;
+    sx = (capture.width - sw) / 2;
+    sy = 0;
+  } else {
+    // Camera is taller than canvas: crop height
+    sw = capture.width;
+    sh = sw / canvasAspect;
+    sx = 0;
+    sy = (capture.height - sh) / 2;
+  }
+  // Draw camera crop to fit canvas
+  image(capture, 0, 0, width, height, sx, sy, sw, sh);
+  // Draw overlay image if available, matching the same crop
   if (overlayImg) {
-    image(overlayImg, 0, 0, width, height);
+    image(overlayImg, 0, 0, width, height, sx, sy, sw, sh);
   }
 
   // auto polling
@@ -140,4 +166,13 @@ async function detectOnce() {
 
 function setMsg(t) {
   document.getElementById("msg").textContent = t;
+}
+
+function windowResized() {
+  // Recalculate aspect and resize canvas
+  deviceAspect = window.innerWidth / window.innerHeight;
+  let baseWidth = 480;
+  let baseHeight = Math.round(baseWidth / deviceAspect);
+  resizeCanvas(baseWidth, baseHeight);
+  canvasAspect = baseWidth / baseHeight;
 }
