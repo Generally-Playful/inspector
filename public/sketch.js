@@ -1,178 +1,192 @@
-// p5 sketch that sends a frame to your Vercel function and draws returned boxes
-
-let capture;
-let started = false;
-let results = [];
-let overlayImg = null; // Will hold the output image from the API
-let autoMode = false;
-let lastRun = 0;
+// --- Globals ---
+let capture; // p5.Video capture object
+let started = false; // True when camera is running
+let results = []; // Array of detection results
+let overlayImg = null; // Output image from API
+let autoMode = false; // Auto-detect mode
+let lastRun = 0; // Last detection timestamp
 const INTERVAL_MS = 1000; // 1 fps when auto mode is on
 let canvasAspect = 4 / 3; // Default aspect ratio
 let deviceAspect = window.innerWidth / window.innerHeight;
 
+let scannedFrame = null;
+
+
+// Flow Control
+// --- App States ---
+const STATE = {
+  IDLE: "idle",           // Waiting for camera/user
+  CAPTURING: "capturing", // Capturing video frame
+  PROCESSING: "processing", // Sending frame, waiting for API
+  REVIEW: "review"        // Showing results
+};
+
+let appState;
+
+
+// --- p5 Setup ---
 function setup() {
-  // Calculate device aspect ratio
-  deviceAspect = window.innerWidth / window.innerHeight;
-  // Choose a base width (downscaled for performance)
+  updateDeviceAspect();
+  setupCanvas();
+  setupCamera();
+  setupUI();
+  appState = STATE.IDLE;
+}
+
+
+// --- Main Draw Loop ---
+function draw() {
+
+  if (!started) return;
+  background(0);
+
+  
+  switch (appState) {
+    case STATE.IDLE:
+      drawIdle();
+      break;
+    case STATE.CAPTURING:
+      drawCapturing();
+      break;
+    case STATE.PROCESSING:
+      drawProcessing();
+      break;
+    case STATE.REVIEW:
+      drawReview();
+      break;
+  }
+  
+  /* 
+  if (autoMode && millis() - lastRun > INTERVAL_MS) {
+    onScan();
+  }
+  */
+
+}
+
+// --- Canvas Setup ---
+function setupCanvas() {
   let baseWidth = 480;
   let baseHeight = Math.round(baseWidth / deviceAspect);
   createCanvas(baseWidth, baseHeight);
   canvasAspect = baseWidth / baseHeight;
-
-  // Rear camera if available
-  capture = createCapture({
-    video: { facingMode: { ideal: "environment" }, width: { ideal: 480 }, height: { ideal: 360 } },
-    audio: false
-  }, () =>{
-    started = true;
-    loop();
-  }
-);
-
-  capture.size(480, 360);
-  capture.hide();
+}
 
 
-  // Wire buttons
+// --- UI Setup ---
+function setupUI() {
   const scanBtn = document.getElementById("scan");
-  scanBtn.addEventListener("click", detectOnce);
+  scanBtn.addEventListener("click", onScan);
 
   const autoBtn = document.getElementById("auto");
-  autoBtn.addEventListener("click", () => {
-    autoMode = !autoMode;
-    autoBtn.textContent = `Auto: ${autoMode ? "On" : "Off"}`;
-  });
+  autoBtn.addEventListener("click", toggleAutoMode);
 
-  // iOS requires a user gesture before camera plays reliably
-//   userStartVideo();
-
-
-  document.getElementById('startBtn').style.display = 'none';
+  const cameraBtn = document.getElementById('cameraBtn');
+  cameraBtn.addEventListener('click', switchToCamera);
 }
 
-function draw() {
-    if(!started) return
-  background(0);
-
-  // Draw camera and overlays with correct aspect
-  // Calculate the largest centered crop from capture to fit canvas aspect
-  let camAspect = capture.width / capture.height;
-  let drawW, drawH, sx, sy, sw, sh;
-  if (camAspect > canvasAspect) {
-    // Camera is wider than canvas: crop width
-    sh = capture.height;
-    sw = sh * canvasAspect;
-    sx = (capture.width - sw) / 2;
-    sy = 0;
-  } else {
-    // Camera is taller than canvas: crop height
-    sw = capture.width;
-    sh = sw / canvasAspect;
-    sx = 0;
-    sy = (capture.height - sh) / 2;
-  }
-  // Draw camera crop to fit canvas
-  image(capture, 0, 0, width, height, sx, sy, sw, sh);
-  // Draw overlay image if available, matching the same crop
-  if (overlayImg) {
-    image(overlayImg, 0, 0, width, height, sx, sy, sw, sh);
-  }
-
-  // auto polling
-  if (autoMode && millis() - lastRun > INTERVAL_MS) {
-    detectOnce();
-  }
-
-  // draw boxes
-  noFill();
-  stroke(0, 255, 0);
-  strokeWeight(2);
-  textSize(12);
-
-  for (const p of results) {
-    // Roboflow typically returns center-based x,y with width,height
-    const x = p.x - p.width / 2;
-    const y = p.y - p.height / 2;
-    rect(x, y, p.width, p.height);
-
-    const label = `${p.class ?? p.label ?? "obj"} ${(p.confidence * 100 | 0)}%`;
-    noStroke(); fill(0, 170);
-    rect(x, y - 16, textWidth(label) + 10, 14, 4);
-    fill(255); text(label, x + 5, y - 4);
-    stroke(0, 255, 0);
-  }
+function switchToCamera(){
+    appState = STATE.CAPTURING;
 }
 
-async function detectOnce() {
+
+// --- Detect Once (API Call) ---
+async function onScan() {
   lastRun = millis();
   setMsg("Scanning…");
-
   try {
-    // Grab a frame into a temporary canvas
-    const tmp = document.createElement("canvas");
-    tmp.width = capture.width;
-    tmp.height = capture.height;
-    const ctx = tmp.getContext("2d");
-    ctx.drawImage(capture.elt, 0, 0);
+    const base64 = getCurrentFrameBase64();
+    const data = await fetchApiInfer(base64);
+    parseApiResponse(data);
+    setMsg(`Found ${results.length} object(s)`);
+    appState = STATE.REVIEW;
 
-    // Downscale/quality helps stay under Vercel body limit (~4.5MB)
-    const base64 = tmp.toDataURL("image/jpeg", 0.6);
-
-    // Same-origin call to your Vercel function
-    const resp = await fetch("/api/infer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ image: { type: "base64", value: base64 } })
-    });
-
-    const text = await resp.text();
-        // Debug: log the raw API response
-        console.log('Raw API response:', text);
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (e) {
-          console.error('Failed to parse API response as JSON:', e);
-          setMsg('Error: Invalid API response');
-          return;
-        }
-    
-        // Parse predictions and output image from new Roboflow API response structure
-        let predictions = [];
-        overlayImg = null;
-        if (data && Array.isArray(data.outputs) && data.outputs.length > 0) {
-          const output = data.outputs[0];
-          if (output && output.predictions && Array.isArray(output.predictions.predictions)) {
-            predictions = output.predictions.predictions;
-          }
-          // If output_image is present, create a p5.Image from base64
-          if (output && output.output_image && output.output_image.value) {
-            const base64 = output.output_image.value;
-            // p5.js can load base64 images using loadImage with a data URL
-            overlayImg = loadImage(
-              'data:image/jpeg;base64,' + base64,
-              () => console.log('Overlay image loaded'),
-              (err) => console.error('Failed to load overlay image', err)
-            );
-          }
-        }
-        results = Array.isArray(predictions) ? predictions : [];
-        setMsg(`Found ${results.length} object(s)`);
   } catch (err) {
     console.error(err);
     setMsg("Error: see console");
   }
+
+  saveCurrentFrame();
+  appState = STATE.PROCESSING;
 }
 
+// --- Get Current Frame as Base64 ---
+function getCurrentFrameBase64() {
+  const tmpCanvas = document.createElement("canvas");
+ tmpCanvas.width = capture.width;
+ tmpCanvas.height = capture.height;
+
+  const ctx = tmpCanvas.getContext("2d");
+  ctx.drawImage(capture.elt, 0, 0);
+    
+  return tmpCanvas.toDataURL("image/jpeg", 0.6);
+}
+
+// --- Fetch API Infer ---
+async function fetchApiInfer(base64) {
+  const resp = await fetch("/api/infer", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ image: { type: "base64", value: base64 } })
+  });
+  const text = await resp.text();
+  console.log('Raw API response:', text);
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    throw new Error('Failed to parse API response as JSON: ' + e);
+  }
+  return data;
+}
+
+// --- Parse API Response ---
+function parseApiResponse(data) {
+  let predictions = [];
+  overlayImg = null;
+  if (data && Array.isArray(data.outputs) && data.outputs.length > 0) {
+    const output = data.outputs[0];
+    if (output && output.predictions && Array.isArray(output.predictions.predictions)) {
+      predictions = output.predictions.predictions;
+    }
+    if (output && output.output_image && output.output_image.value) {
+      const base64 = output.output_image.value;
+      overlayImg = loadImage(
+        'data:image/jpeg;base64,' + base64,
+        () => console.log('Overlay image loaded'),
+        (err) => console.error('Failed to load overlay image', err)
+      );
+    }
+  }
+  results = Array.isArray(predictions) ? predictions : [];
+}
+
+// --- Toggle Auto Mode ---
+function toggleAutoMode() {
+  autoMode = !autoMode;
+  const autoBtn = document.getElementById("auto");
+  autoBtn.textContent = `Auto: ${autoMode ? "On" : "Off"}`;
+}
+
+// --- Set Status Message ---
 function setMsg(t) {
   document.getElementById("msg").textContent = t;
 }
 
+// --- Window Resize Handler ---
 function windowResized() {
-  // Recalculate aspect and resize canvas
+  updateDeviceAspect();
+  setupCanvas();
+}
+
+// --- Update Device Aspect ---
+function updateDeviceAspect() {
   deviceAspect = window.innerWidth / window.innerHeight;
-  let baseWidth = 480;
-  let baseHeight = Math.round(baseWidth / deviceAspect);
-  resizeCanvas(baseWidth, baseHeight);
-  canvasAspect = baseWidth / baseHeight;
+}
+
+// --- Save current frame as p5.Image for review ---
+function saveCurrentFrame() {
+  // Create a p5.Image from the current video frame
+  scannedFrame = createImage(capture.width, capture.height);
+  scannedFrame.copy(capture, 0, 0, capture.width, capture.height, 0, 0, capture.width, capture.height);
 }
