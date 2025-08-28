@@ -32,12 +32,12 @@ export default async function handler(req, res) {
     );
 
     const text = await rfResp.text(); // pass-through body
-    // Log Roboflow response for debu   gging
+    // Log Roboflow response for debugging
     console.log('Roboflow response status:', rfResp.status);
     console.log('Roboflow response body:', text);
+    res.setHeader('Content-Type', 'application/json');
     res
       .status(rfResp.ok ? 200 : rfResp.status)
-      .type('application/json')
       .send(text);
   } catch (e) {
     // Log error details for debugging
