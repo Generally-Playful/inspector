@@ -96,6 +96,10 @@ async function onScan() {
   setMsg("Scanning…");
   try {
     const base64 = getCurrentFrameBase64();
+    
+    saveCurrentFrame();
+    appState = STATE.PROCESSING;
+    
     const data = await fetchApiInfer(base64);
     parseApiResponse(data);
     setMsg(`Found ${results.length} object(s)`);
@@ -104,10 +108,9 @@ async function onScan() {
   } catch (err) {
     console.error(err);
     setMsg("Error: see console");
+    appState = STATE.IDLE;
   }
 
-  saveCurrentFrame();
-  appState = STATE.PROCESSING;
 }
 
 // --- Get Current Frame as Base64 ---
