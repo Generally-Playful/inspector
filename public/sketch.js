@@ -6,8 +6,11 @@ let overlayImg = null; // Output image from API
 let autoMode = false; // Auto-detect mode
 let lastRun = 0; // Last detection timestamp
 const INTERVAL_MS = 1000; // 1 fps when auto mode is on
+
 let canvasAspect = 4 / 3; // Default aspect ratio
 let deviceAspect = window.innerWidth / window.innerHeight;
+let baseWidth = 480;
+let baseHeight = 640;
 
 let scannedFrame = null;
 
@@ -25,9 +28,10 @@ let appState;
 
 
 // --- p5 Setup ---
+
+
 function setup() {
   updateDeviceAspect();
-  setupCanvas();
   setupCamera();
   setupUI();
   appState = STATE.IDLE;
@@ -65,9 +69,9 @@ function draw() {
 }
 
 // --- Canvas Setup ---
+
+
 function setupCanvas() {
-  let baseWidth = 480;
-  let baseHeight = Math.round(baseWidth / deviceAspect);
   createCanvas(baseWidth, baseHeight);
   canvasAspect = baseWidth / baseHeight;
 }
@@ -177,9 +181,11 @@ function setMsg(t) {
 }
 
 // --- Window Resize Handler ---
+
+
 function windowResized() {
   updateDeviceAspect();
-  setupCanvas();
+  setupCamera();
 }
 
 // --- Update Device Aspect ---
