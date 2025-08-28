@@ -38,6 +38,7 @@ function setup() {
   // iOS requires a user gesture before camera plays reliably
 //   userStartVideo();
 
+
   document.getElementById('startBtn').style.display = 'none';
 }
 
@@ -93,7 +94,16 @@ async function detectOnce() {
       body: JSON.stringify({ image: { type: "base64", value: base64 } })
     });
 
-    const data = await resp.json();
+    const text = await resp.text();
+    console.log('Raw API response:', text);
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error('Failed to parse API response as JSON:', e);
+      setMsg('Error: Invalid API response');
+      return;
+    }
 
     // Adjust this mapping if your Workflow JSON differs
     // Common shapes:
