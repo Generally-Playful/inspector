@@ -1,6 +1,7 @@
 // p5 sketch that sends a frame to your Vercel function and draws returned boxes
 
 let capture;
+let started = false;
 let results = [];
 let autoMode = false;
 let lastRun = 0;
@@ -14,9 +15,15 @@ function setup() {
   capture = createCapture({
     video: { facingMode: { ideal: "environment" }, width: { ideal: 480 }, height: { ideal: 360 } },
     audio: false
-  });
+  }, () =>{
+    started = true;
+    loop();
+  }
+);
+
   capture.size(480, 360);
   capture.hide();
+
 
   // Wire buttons
   const scanBtn = document.getElementById("scan");
@@ -29,10 +36,13 @@ function setup() {
   });
 
   // iOS requires a user gesture before camera plays reliably
-  userStartVideo();
+//   userStartVideo();
+
+  document.getElementById('startBtn').style.display = 'none';
 }
 
 function draw() {
+    if(!started) return
   background(0);
   image(capture, 0, 0, width, height);
 
