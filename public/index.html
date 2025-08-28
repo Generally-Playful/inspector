@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+  <title>Inspector – p5 + Vercel + Roboflow</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin:0; background:#111; color:#eee; font:14px system-ui, sans-serif; }
+    #ui { display:flex; gap:8px; padding:10px; align-items:center; }
+    button { padding:8px 12px; border-radius:8px; border:0; background:#2d6cdf; color:#fff; }
+    #msg { opacity:.8; }
+    canvas { display:block; margin:0 auto; }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/p5@1.11.9/lib/p5.min.js"></script>
+  <script defer src="sketch.js"></script>
+</head>
+<body>
+  <div id="ui">
+    <button id="scan">Scan Frame</button>
+    <button id="auto">Auto: Off</button>
+    <span id="msg">Ready</span>
+  </div>
+</body>
+</html>
