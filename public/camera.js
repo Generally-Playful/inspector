@@ -5,7 +5,8 @@
 
 function setupCamera() {
    capture = createCapture({
-    video: { facingMode: { ideal: "environment" } }
+    video: { facingMode: { ideal: "environment" } },
+    audio: false
    }, ()=>{
     started = true;
    });
