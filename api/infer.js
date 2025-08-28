@@ -1,6 +1,7 @@
 
 export default async function handler(req, res) {
-  // Basic CORS & preflight
+  console.log('API handler invoked with method:', req.method, 'url:', req.url);
+    // Basic CORS & preflight
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -31,11 +32,16 @@ export default async function handler(req, res) {
     );
 
     const text = await rfResp.text(); // pass-through body
+    // Log Roboflow response for debu   gging
+    console.log('Roboflow response status:', rfResp.status);
+    console.log('Roboflow response body:', text);
     res
       .status(rfResp.ok ? 200 : rfResp.status)
       .type('application/json')
       .send(text);
   } catch (e) {
+    // Log error details for debugging
+    console.error('API handler error:', e);
     res.status(500).json({ error: 'proxy_error', detail: String(e) });
   }
 }
