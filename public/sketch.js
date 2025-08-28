@@ -1,4 +1,5 @@
 // --- Globals ---
+let canvas;
 let capture; // p5.Video capture object
 let started = false; // True when camera is running
 let results = []; // Array of detection results
@@ -72,7 +73,7 @@ function draw() {
 
 
 function setupCanvas() {
-  createCanvas(window.innerWidth, window.innerHeight);
+  canvas = createCanvas(window.innerWidth, window.innerHeight);
 }
 
 
@@ -98,13 +99,14 @@ function switchToCamera(){
 async function onScan() {
   lastRun = millis();
   setMsg("Scanning…");
+  saveCurrentFrame();
+    console.log('Current frame saved for review');
+  appState = STATE.PROCESSING;
+    console.log("Appstate: Processing")
+
   try {
     const base64 = getCurrentFrameBase64();
     
-    saveCurrentFrame();
-    console.log('Current frame saved for review');
-    appState = STATE.PROCESSING;
-    console.log("Appstate: Processing")
     
     const data = await fetchApiInfer(base64);
     parseApiResponse(data);
@@ -202,7 +204,14 @@ function updateDeviceAspect() {
 
 // --- Save current frame as p5.Image for review ---
 function saveCurrentFrame() {
+    
+  buffer = createGraphics(width, height);
+  buffer.copy(
+      canvas,
+      0, 0, width, height,
+      0, 0, buffer.width, buffer.height);
   // Create a p5.Image from the current video frame
-  scannedFrame = createImage(capture.width, capture.height);
-  scannedFrame.copy(capture, 0, 0, capture.width, capture.height, 0, 0, capture.width, capture.height);
+  scannedFrame = createImage(width, height);
+  scannedFrame.copy(buffer, 0, 0, buffer.width, buffer.height, 0, 0, width, height);
+//   scannedFrame.copy(can, 0, 0, width, capture.height, 0, 0, capture.width, capture.height);
 }

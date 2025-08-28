@@ -54,7 +54,6 @@ function drawLiveCamera() {
   let offsetX = (cw - drawW) / 2;
   let offsetY = (ch - drawH) / 2;
 
-  console.log(cw, ch, vw, vh, drawW, drawH, offsetX, offsetY);
   image(capture, offsetX, offsetY, drawW, drawH);
 }
 
@@ -75,20 +74,22 @@ function drawBoundingBoxes() {
 function drawScannedFrame() {
   if (scannedFrame) {
     // Draw the saved frame, aspect-correct
-    let camAspect = scannedFrame.width / scannedFrame.height;
-    let sx, sy, sw, sh;
-    if (camAspect > canvasAspect) {
-      sh = scannedFrame.height;
-      sw = sh * canvasAspect;
-      sx = (scannedFrame.width - sw) / 2;
-      sy = 0;
-    } else {
-      sw = scannedFrame.width;
-      sh = sw / canvasAspect;
-      sx = 0;
-      sy = (scannedFrame.height - sh) / 2;
-    }
-    image(scannedFrame, 0, 0, width, height, sx, sy, sw, sh);
+    // let camAspect = scannedFrame.width / scannedFrame.height;
+    // let sx, sy, sw, sh;
+    // if (camAspect > canvasAspect) {
+    //   sh = scannedFrame.height;
+    //   sw = sh * canvasAspect;
+    //   sx = (scannedFrame.width - sw) / 2;
+    //   sy = 0;
+    // } else {
+    //   sw = scannedFrame.width;
+    //   sh = sw / canvasAspect;
+    //   sx = 0;
+    //   sy = (scannedFrame.height - sh) / 2;
+    // }
+
+    console.log('Scanned frame drawn:', width, height);
+    image(scannedFrame, 0, 0, width, height);
   }
 }
 
