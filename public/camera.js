@@ -4,32 +4,14 @@
 
 
 function setupCamera() {
-  // Request portrait mode aspect
-  let camWidth = 480;
-  let camHeight = 640;
-  if (typeof window !== 'undefined' && window.screen && window.screen.orientation) {
-    try {
-      window.screen.orientation.lock('portrait');
-      console.log("Screen orientation locked to portrait");
-    } catch (e) {
-      // Some browsers may not support this
-      console.log("Unable to lock screen orientation");
-    }
-  }
-
-  capture = createCapture({
-    video: { facingMode: { ideal: "environment" }, width: { ideal: camWidth }, height: { ideal: camHeight } },
-    audio: false
-  }, () => {
+   capture = createCapture(VIDEO, ()=>{
     started = true;
-    // Use actual capture size, but scale down for display
-    baseWidth = Math.floor(capture.width * 0.7);
-    baseHeight = Math.floor(capture.height * 0.7);
-    setupCanvas();
-    loop();
-  });
-  capture.size(camWidth, camHeight);
-  capture.hide();
+   });
+
+//    capture.size(window.innerWidth, window.innerHeight);
+   capture.hide();
+
+   console.log('Camera initialized with size:', capture.width, 'x', capture.height);
 }
 
 

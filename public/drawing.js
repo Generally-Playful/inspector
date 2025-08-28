@@ -38,8 +38,24 @@ function drawReview()
 
 // --- Draw Live Camera (for capturing state) ---
 function drawLiveCamera() {
-  let { sx, sy, sw, sh } = getScreenDim();
-  image(capture, 0, 0, width, height, sx, sy, sw, sh);
+
+  // Canvas and video dimensions
+  let cw = width;
+  let ch = height;
+  let vw = capture.width;
+  let vh = capture.height;
+
+  // Calculate scale to cover canvas
+  let scale = Math.max(cw / vw, ch / vh);
+
+  // Calculate the size and position to draw the video
+  let drawW = vw * scale;
+  let drawH = vh * scale;
+  let offsetX = (cw - drawW) / 2;
+  let offsetY = (ch - drawH) / 2;
+
+  console.log(cw, ch, vw, vh, drawW, drawH, offsetX, offsetY);
+  image(capture, offsetX, offsetY, drawW, drawH);
 }
 
 // --- Draw Detection Boxes ---

@@ -7,10 +7,8 @@ let autoMode = false; // Auto-detect mode
 let lastRun = 0; // Last detection timestamp
 const INTERVAL_MS = 1000; // 1 fps when auto mode is on
 
-let canvasAspect = 4 / 3; // Default aspect ratio
 let deviceAspect = window.innerWidth / window.innerHeight;
-let baseWidth = 480;
-let baseHeight = 640;
+
 
 let scannedFrame = null;
 
@@ -33,6 +31,7 @@ let appState;
 function setup() {
   updateDeviceAspect();
   setupCamera();
+  setupCanvas();
   setupUI();
   appState = STATE.IDLE;
 }
@@ -72,8 +71,7 @@ function draw() {
 
 
 function setupCanvas() {
-  createCanvas(baseWidth, baseHeight);
-  canvasAspect = baseWidth / baseHeight;
+  createCanvas(window.innerWidth, window.innerHeight);
 }
 
 
@@ -90,6 +88,7 @@ function setupUI() {
 }
 
 function switchToCamera(){
+    console.log('Switching to camera mode');
     appState = STATE.CAPTURING;
 }
 
@@ -102,12 +101,15 @@ async function onScan() {
     const base64 = getCurrentFrameBase64();
     
     saveCurrentFrame();
+    console.log('Current frame saved for review');
     appState = STATE.PROCESSING;
+    console.log("Appstate: Processing")
     
     const data = await fetchApiInfer(base64);
     parseApiResponse(data);
     setMsg(`Found ${results.length} object(s)`);
     appState = STATE.REVIEW;
+    console.log("Appstate: Review") 
 
   } catch (err) {
     console.error(err);
