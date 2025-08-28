@@ -6,6 +6,7 @@ let overlayImg = null; // Output image from API
 let autoMode = false; // Auto-detect mode
 let lastRun = 0; // Last detection timestamp
 const INTERVAL_MS = 1000; // 1 fps when auto mode is on
+const DOWNSIZE = 4;
 
 let deviceAspect = window.innerWidth / window.innerHeight;
 
@@ -120,14 +121,18 @@ async function onScan() {
 }
 
 // --- Get Current Frame as Base64 ---
+
 function getCurrentFrameBase64() {
+  // Shrink the image by a factor of DOWNSIZE
+  const outW = Math.floor(capture.width / DOWNSIZE);
+  const outH = Math.floor(capture.height / DOWNSIZE);
   const tmpCanvas = document.createElement("canvas");
- tmpCanvas.width = capture.width;
- tmpCanvas.height = capture.height;
+  tmpCanvas.width = outW;
+  tmpCanvas.height = outH;
 
   const ctx = tmpCanvas.getContext("2d");
-  ctx.drawImage(capture.elt, 0, 0);
-    
+  ctx.drawImage(capture.elt, 0, 0, capture.width, capture.height, 0, 0, outW, outH);
+  
   return tmpCanvas.toDataURL("image/jpeg", 0.6);
 }
 
