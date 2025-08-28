@@ -3,6 +3,7 @@
 let capture;
 let started = false;
 let results = [];
+let overlayImg = null; // Will hold the output image from the API
 let autoMode = false;
 let lastRun = 0;
 const INTERVAL_MS = 1000; // 1 fps when auto mode is on
@@ -46,6 +47,10 @@ function draw() {
     if(!started) return
   background(0);
   image(capture, 0, 0, width, height);
+  // Draw overlay image if available
+  if (overlayImg) {
+    image(overlayImg, 0, 0, width, height);
+  }
 
   // auto polling
   if (autoMode && millis() - lastRun > INTERVAL_MS) {
@@ -95,27 +100,38 @@ async function detectOnce() {
     });
 
     const text = await resp.text();
-    console.log('Raw API response:', text);
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error('Failed to parse API response as JSON:', e);
-      setMsg('Error: Invalid API response');
-      return;
-    }
-
-    // Adjust this mapping if your Workflow JSON differs
-    // Common shapes:
-    // - data.outputs[0].predictions -> [{x,y,width,height,class,confidence}, ...]
-    // - or data.predictions directly
-    const preds =
-      (data.outputs && data.outputs[0] && data.outputs[0].predictions) ||
-      data.predictions ||
-      [];
-
-    results = Array.isArray(preds) ? preds : [];
-    setMsg(`Found ${results.length} object(s)`);
+        // Debug: log the raw API response
+        console.log('Raw API response:', text);
+        let data;
+        try {
+          data = JSON.parse(text);
+        } catch (e) {
+          console.error('Failed to parse API response as JSON:', e);
+          setMsg('Error: Invalid API response');
+          return;
+        }
+    
+        // Parse predictions and output image from new Roboflow API response structure
+        let predictions = [];
+        overlayImg = null;
+        if (data && Array.isArray(data.outputs) && data.outputs.length > 0) {
+          const output = data.outputs[0];
+          if (output && output.predictions && Array.isArray(output.predictions.predictions)) {
+            predictions = output.predictions.predictions;
+          }
+          // If output_image is present, create a p5.Image from base64
+          if (output && output.output_image && output.output_image.value) {
+            const base64 = output.output_image.value;
+            // p5.js can load base64 images using loadImage with a data URL
+            overlayImg = loadImage(
+              'data:image/jpeg;base64,' + base64,
+              () => console.log('Overlay image loaded'),
+              (err) => console.error('Failed to load overlay image', err)
+            );
+          }
+        }
+        results = Array.isArray(predictions) ? predictions : [];
+        setMsg(`Found ${results.length} object(s)`);
   } catch (err) {
     console.error(err);
     setMsg("Error: see console");
