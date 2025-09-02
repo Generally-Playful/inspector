@@ -146,19 +146,6 @@ function getCurrentFrameBase64() {
 
   return tmpCanvas.toDataURL("image/jpeg", 0.8);
 }
-// function getCurrentFrameBase64() {
-//   // Shrink the image by a factor of DOWNSIZE
-//   const outW = Math.floor(capture.width / DOWNSIZE);
-//   const outH = Math.floor(capture.height / DOWNSIZE);
-//   const tmpCanvas = document.createElement("canvas");
-//   tmpCanvas.width = outW;
-//   tmpCanvas.height = outH;
-
-//   const ctx = tmpCanvas.getContext("2d");
-//   ctx.drawImage(capture.elt, 0, 0, capture.width, capture.height, 0, 0, outW, outH);
-  
-//   return tmpCanvas.toDataURL("image/jpeg", 0.8);
-// }
 
 // --- Fetch API Infer ---
 async function fetchApiInfer(base64) {
@@ -226,14 +213,14 @@ function updateDeviceAspect() {
 
 // --- Save current frame as p5.Image for review ---
 function saveCurrentFrame() {
-    
-  buffer = createGraphics(width, height);
-  buffer.copy(
-      canvas,
-      0, 0, width, height,
-      0, 0, buffer.width, buffer.height);
-  // Create a p5.Image from the current video frame
-  scannedFrame = createImage(width, height);
-  scannedFrame.copy(buffer, 0, 0, buffer.width, buffer.height, 0, 0, width, height);
-//   scannedFrame.copy(can, 0, 0, width, capture.height, 0, 0, capture.width, capture.height);
+  // Save the same square region as the visible camera box
+  const squareCanvasSize = Math.min(width, height);
+  const squareCanvasX = (width - squareCanvasSize) / 2;
+  const squareCanvasY = (height - squareCanvasSize) / 2;
+  scannedFrame = createImage(squareCanvasSize, squareCanvasSize);
+  scannedFrame.copy(
+    canvas,
+    squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize,
+    0, 0, squareCanvasSize, squareCanvasSize
+  );
 }
