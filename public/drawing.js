@@ -29,6 +29,8 @@ function drawReview()
   // Optionally, add review animation or indication
   drawScannedFrame();
   drawBoundingBoxes();
+
+  image(overlayImg, 0, 0, width, height);
 }
 
 
@@ -65,6 +67,10 @@ function drawBoundingBoxes() {
   strokeWeight(2);
   textSize(12);
   for (const p of results) {
+
+    console.log("P:");
+    console.log(p); 
+    
     drawBoundingBox(p);
     drawBoxLabel(p);
   }
@@ -73,20 +79,6 @@ function drawBoundingBoxes() {
 // --- Draw Review State ---
 function drawScannedFrame() {
   if (scannedFrame) {
-    // Draw the saved frame, aspect-correct
-    // let camAspect = scannedFrame.width / scannedFrame.height;
-    // let sx, sy, sw, sh;
-    // if (camAspect > canvasAspect) {
-    //   sh = scannedFrame.height;
-    //   sw = sh * canvasAspect;
-    //   sx = (scannedFrame.width - sw) / 2;
-    //   sy = 0;
-    // } else {
-    //   sw = scannedFrame.width;
-    //   sh = sw / canvasAspect;
-    //   sx = 0;
-    //   sy = (scannedFrame.height - sh) / 2;
-    // }
 
     console.log('Scanned frame drawn:', width, height);
     image(scannedFrame, 0, 0, width, height);

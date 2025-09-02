@@ -135,7 +135,7 @@ function getCurrentFrameBase64() {
   const ctx = tmpCanvas.getContext("2d");
   ctx.drawImage(capture.elt, 0, 0, capture.width, capture.height, 0, 0, outW, outH);
   
-  return tmpCanvas.toDataURL("image/jpeg", 0.6);
+  return tmpCanvas.toDataURL("image/jpeg", 0.8);
 }
 
 // --- Fetch API Infer ---
