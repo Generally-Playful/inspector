@@ -27,6 +27,7 @@ function drawReview()
 {
   // Optionally, add review animation or indication
   drawScannedFrame();
+
   // Draw overlay image (from API) into the same square region
   // if (overlayImg) {
   //   let squareCanvasSize = Math.min(width, height);
@@ -78,8 +79,8 @@ function drawBoundingBoxes() {
       continue;
     }
 
-    console.log("P:");
-    console.log(p); 
+    // console.log("P:");
+    // console.log(p); 
 
     drawBoundingBox(p);
     drawBoxLabel(p);
@@ -88,15 +89,26 @@ function drawBoundingBoxes() {
 
 // --- Draw Review State ---
 function drawScannedFrame() {
+  // if (scannedFrame) {
+  //   // Draw the 512x512 scanned frame into the same square region as the live camera
+  //   let squareCanvasSize = Math.min(width, height);
+  //   let squareCanvasX = (width - squareCanvasSize) / 2;
+  //   let squareCanvasY = (height - squareCanvasSize) / 2;
+
+  //   image(scannedFrame, 
+  //     squareCanvasX, squareCanvasY, 
+  //     squareCanvasSize, squareCanvasSize,
+  //     COVER, CENTER, CENTER);
+  // }
+
   if (scannedFrame) {
-    // Draw the 512x512 scanned frame into the same square region as the live camera
     let squareCanvasSize = Math.min(width, height);
     let squareCanvasX = (width - squareCanvasSize) / 2;
     let squareCanvasY = (height - squareCanvasSize) / 2;
+    
     image(scannedFrame, 
       squareCanvasX, squareCanvasY, 
-      squareCanvasSize, squareCanvasSize,
-      COVER, CENTER, CENTER);
+      squareCanvasSize, squareCanvasSize);
   }
 }
 
