@@ -19,7 +19,6 @@ function drawProcessing()
   noFill();
   stroke(255);
   strokeWeight(2);
-
   circle(width/2, height/2, 100);
 
 }
@@ -33,7 +32,9 @@ function drawReview()
     let squareCanvasSize = Math.min(width, height);
     let squareCanvasX = (width - squareCanvasSize) / 2;
     let squareCanvasY = (height - squareCanvasSize) / 2;
-    image(overlayImg, squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize);
+    image(overlayImg, 
+      squareCanvasX, squareCanvasY, 
+      squareCanvasSize, squareCanvasSize);
   }
   
   drawBoundingBoxes();
@@ -69,10 +70,7 @@ image(
 // --- Draw Detection Boxes ---
 function drawBoundingBoxes() {
   if (!results || results.length === 0) return;
-  noFill();
-  stroke(0, 255, 0);
-  strokeWeight(2);
-  textSize(12);
+  
   for (const p of results) {
 
     console.log("P:");
@@ -96,11 +94,21 @@ function drawScannedFrame() {
 
 // --- Draw a Single Bounding Box ---
 function drawBoundingBox(p) {
+
+  noFill();
+  strokeWeight(2);
+  stroke(255, 0, 0);
   // Assume p.x, p.y, p.width, p.height are relative to 512x512 image
   // Scale to the square region on the canvas
   let squareCanvasSize = Math.min(width, height);
   let squareCanvasX = (width - squareCanvasSize) / 2;
   let squareCanvasY = (height - squareCanvasSize) / 2;
+
+  rect(squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize);
+
+  stroke(0, 255, 0);
+  textSize(12);
+  
   const scale = squareCanvasSize / 512;
   const x = squareCanvasX + (p.x - p.width / 2) * scale;
   const y = squareCanvasY + (p.y - p.height / 2) * scale;
