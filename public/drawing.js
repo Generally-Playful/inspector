@@ -73,7 +73,7 @@ function drawBoundingBoxes() {
   
   for (const p of results) {
 
-    if(p.confidence <= 0.9){
+    if(p.confidence <= 0.85){
       console.log("Low confidence:", p.confidence);
       continue;
     }
