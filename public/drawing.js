@@ -28,14 +28,14 @@ function drawReview()
   // Optionally, add review animation or indication
   drawScannedFrame();
   // Draw overlay image (from API) into the same square region
-  if (overlayImg) {
-    let squareCanvasSize = Math.min(width, height);
-    let squareCanvasX = (width - squareCanvasSize) / 2;
-    let squareCanvasY = (height - squareCanvasSize) / 2;
-    image(overlayImg, 
-      squareCanvasX, squareCanvasY, 
-      squareCanvasSize, squareCanvasSize);
-  }
+  // if (overlayImg) {
+  //   let squareCanvasSize = Math.min(width, height);
+  //   let squareCanvasX = (width - squareCanvasSize) / 2;
+  //   let squareCanvasY = (height - squareCanvasSize) / 2;
+  //   image(overlayImg, 
+  //     squareCanvasX, squareCanvasY, 
+  //     squareCanvasSize, squareCanvasSize);
+  // }
   
   drawBoundingBoxes();
 }
@@ -73,6 +73,11 @@ function drawBoundingBoxes() {
   
   for (const p of results) {
 
+    if(p.confidence <= 0.9){
+      console.log("Low confidence:", p.confidence);
+      continue;
+    }
+
     console.log("P:");
     console.log(p); 
 
@@ -99,7 +104,7 @@ function drawScannedFrame() {
 function drawBoundingBox(p) {
 
   noFill();
-  strokeWeight(2);
+  strokeWeight(4);
   stroke(255, 0, 0);
   // Assume p.x, p.y, p.width, p.height are relative to 512x512 image
   // Scale to the square region on the canvas
@@ -109,8 +114,8 @@ function drawBoundingBox(p) {
 
   rect(squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize);
 
+  strokeWeight(2);
   stroke(0, 255, 0);
-  textSize(12);
   
   const scale = squareCanvasSize / CV_IMG_SIZE;
   const x = squareCanvasX + (p.x - p.width / 2) * scale;
@@ -120,6 +125,8 @@ function drawBoundingBox(p) {
 
 // --- Draw Label for a Box ---
 function drawBoxLabel(p) {
+  
+  textSize(12);
   // Assume p.x, p.y, p.width, p.height are relative to 512x512 image
   // Scale to the square region on the canvas
   let squareCanvasSize = Math.min(width, height);
