@@ -1,3 +1,4 @@
+
 // --- Globals ---
 let canvas;
 let capture; // p5.Video capture object
@@ -9,13 +10,8 @@ let lastRun = 0; // Last detection timestamp
 const INTERVAL_MS = 1000; // 1 fps when auto mode is on
 const CV_IMG_SIZE = 512;
 
-
-
 let deviceAspect = window.innerWidth / window.innerHeight;
-
-
 let scannedFrame = null;
-
 
 // Flow Control
 // --- App States ---
@@ -27,7 +23,6 @@ const STATE = {
 };
 
 let appState;
-
 
 // --- p5 Setup ---
 
@@ -69,14 +64,17 @@ function draw() {
   }
   */
 
+  // --- Debug: Draw the 512x512 API image if loaded ---
+  drawDebugImage();
+
 }
 
 // --- Canvas Setup ---
 
 
 function setupCanvas() {
-  canvas = createCanvas(window.innerWidth, window.innerHeight);
-}
+  const squareSize = Math.min(window.innerWidth, window.innerHeight);
+  canvas = createCanvas(squareSize, squareSize);}
 
 
 // --- UI Setup ---
@@ -121,7 +119,6 @@ async function onScan() {
     setMsg("Error: see console");
     appState = STATE.IDLE;
   }
-
 }
 
 // --- Get Current Frame as Base64 ---
@@ -133,16 +130,21 @@ function getCurrentFrameBase64() {
 
   // Always output a CV_IMG_SIZE image
   const outSize = CV_IMG_SIZE;
+  
+  // Use p5's get() to extract the region as a p5.Image
+  const region = get(squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize);
+
   const tmpCanvas = document.createElement("canvas");
   tmpCanvas.width = outSize;
   tmpCanvas.height = outSize;
+ const ctx = tmpCanvas.getContext("2d");
+  ctx.drawImage(region.canvas, 0, 0, outSize, outSize);
 
-  const ctx = tmpCanvas.getContext("2d");
-  ctx.drawImage(
-    canvas.elt,
-    squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize, // src
-    0, 0, outSize, outSize // dest
-  );
+  // ctx.drawImage(
+  //   canvas.elt,
+  //   squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize, // src
+  //   0, 0, outSize, outSize // dest
+  // );
 
   return tmpCanvas.toDataURL("image/jpeg", 0.8);
 }
@@ -204,6 +206,7 @@ function setMsg(t) {
 function windowResized() {
   updateDeviceAspect();
   setupCamera();
+  setupCanvas();
 }
 
 // --- Update Device Aspect ---
@@ -218,9 +221,12 @@ function saveCurrentFrame() {
   const squareCanvasX = (width - squareCanvasSize) / 2;
   const squareCanvasY = (height - squareCanvasSize) / 2;
   scannedFrame = createImage(squareCanvasSize, squareCanvasSize);
+
   scannedFrame.copy(
     canvas,
-    squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize,
-    0, 0, squareCanvasSize, squareCanvasSize
+    squareCanvasX, squareCanvasY, // From XY
+    squareCanvasSize, squareCanvasSize, // From WH
+    0, 0, // To XY
+    squareCanvasSize, squareCanvasSize // To WH
   );
 }
