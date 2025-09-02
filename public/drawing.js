@@ -88,7 +88,10 @@ function drawScannedFrame() {
     let squareCanvasSize = Math.min(width, height);
     let squareCanvasX = (width - squareCanvasSize) / 2;
     let squareCanvasY = (height - squareCanvasSize) / 2;
-    image(scannedFrame, squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize);
+    image(scannedFrame, 
+      squareCanvasX, squareCanvasY, 
+      squareCanvasSize, squareCanvasSize,
+      COVER, CENTER, CENTER);
   }
 }
 
@@ -109,7 +112,7 @@ function drawBoundingBox(p) {
   stroke(0, 255, 0);
   textSize(12);
   
-  const scale = squareCanvasSize / 512;
+  const scale = squareCanvasSize / CV_IMG_SIZE;
   const x = squareCanvasX + (p.x - p.width / 2) * scale;
   const y = squareCanvasY + (p.y - p.height / 2) * scale;
   rect(x, y, p.width * scale, p.height * scale);
@@ -122,7 +125,9 @@ function drawBoxLabel(p) {
   let squareCanvasSize = Math.min(width, height);
   let squareCanvasX = (width - squareCanvasSize) / 2;
   let squareCanvasY = (height - squareCanvasSize) / 2;
-  const scale = squareCanvasSize / 512;
+
+
+  const scale = squareCanvasSize / CV_IMG_SIZE;
   const x = squareCanvasX + (p.x - p.width / 2) * scale;
   const y = squareCanvasY + (p.y - p.height / 2) * scale;
   const label = `${p.class ?? p.label ?? "obj"} ${(p.confidence * 100 | 0)}%`;
