@@ -7,7 +7,9 @@ let overlayImg = null; // Output image from API
 let autoMode = false; // Auto-detect mode
 let lastRun = 0; // Last detection timestamp
 const INTERVAL_MS = 1000; // 1 fps when auto mode is on
-const DOWNSIZE = 4;
+const CV_IMG_SIZE = 512;
+
+
 
 let deviceAspect = window.innerWidth / window.innerHeight;
 
@@ -123,20 +125,40 @@ async function onScan() {
 }
 
 // --- Get Current Frame as Base64 ---
-
 function getCurrentFrameBase64() {
-  // Shrink the image by a factor of DOWNSIZE
-  const outW = Math.floor(capture.width / DOWNSIZE);
-  const outH = Math.floor(capture.height / DOWNSIZE);
+  // Calculate the square box region
+  const squareCanvasSize = Math.min(width, height);
+  const squareCanvasX = (width - squareCanvasSize) / 2;
+  const squareCanvasY = (height - squareCanvasSize) / 2;
+
+  // Always output a CV_IMG_SIZE image
+  const outSize = CV_IMG_SIZE;
   const tmpCanvas = document.createElement("canvas");
-  tmpCanvas.width = outW;
-  tmpCanvas.height = outH;
+  tmpCanvas.width = outSize;
+  tmpCanvas.height = outSize;
 
   const ctx = tmpCanvas.getContext("2d");
-  ctx.drawImage(capture.elt, 0, 0, capture.width, capture.height, 0, 0, outW, outH);
-  
+  ctx.drawImage(
+    canvas.elt,
+    squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize, // src
+    0, 0, outSize, outSize // dest
+  );
+
   return tmpCanvas.toDataURL("image/jpeg", 0.8);
 }
+// function getCurrentFrameBase64() {
+//   // Shrink the image by a factor of DOWNSIZE
+//   const outW = Math.floor(capture.width / DOWNSIZE);
+//   const outH = Math.floor(capture.height / DOWNSIZE);
+//   const tmpCanvas = document.createElement("canvas");
+//   tmpCanvas.width = outW;
+//   tmpCanvas.height = outH;
+
+//   const ctx = tmpCanvas.getContext("2d");
+//   ctx.drawImage(capture.elt, 0, 0, capture.width, capture.height, 0, 0, outW, outH);
+  
+//   return tmpCanvas.toDataURL("image/jpeg", 0.8);
+// }
 
 // --- Fetch API Infer ---
 async function fetchApiInfer(base64) {

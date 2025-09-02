@@ -28,9 +28,15 @@ function drawReview()
 {
   // Optionally, add review animation or indication
   drawScannedFrame();
+  // Draw overlay image (from API) into the same square region
+  if (overlayImg) {
+    let squareCanvasSize = Math.min(width, height);
+    let squareCanvasX = (width - squareCanvasSize) / 2;
+    let squareCanvasY = (height - squareCanvasSize) / 2;
+    image(overlayImg, squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize);
+  }
+  
   drawBoundingBoxes();
-
-  image(overlayImg, 0, 0, width, height);
 }
 
 
@@ -40,23 +46,24 @@ function drawReview()
 
 // --- Draw Live Camera (for capturing state) ---
 function drawLiveCamera() {
+  let boxSize = Math.min(width, height);
+  let boxCornerX = (width - boxSize) / 2;
+  let boxCornerY = (height - boxSize) / 2;
 
-  // Canvas and video dimensions
-  let cw = width;
-  let ch = height;
-  let vw = capture.width;
-  let vh = capture.height;
+// Draw the video, center-cropped to a square region
+image(
+  capture,
+  boxCornerX, boxCornerY, boxSize, boxSize, // destination rectangle (on canvas)
+  0, 0, capture.width, capture.height, // source rectangle (full video)
+  COVER, CENTER, CENTER // fit mode and alignment
+);
 
-  // Calculate scale to cover canvas
-  let scale = Math.max(cw / vw, ch / vh);
+  // Draw Decor
+  noFill();
+  stroke(255);
+  strokeWeight(2);
+  rect(boxCornerX, boxCornerY, boxSize);
 
-  // Calculate the size and position to draw the video
-  let drawW = vw * scale;
-  let drawH = vh * scale;
-  let offsetX = (cw - drawW) / 2;
-  let offsetY = (ch - drawH) / 2;
-
-  image(capture, offsetX, offsetY, drawW, drawH);
 }
 
 // --- Draw Detection Boxes ---
@@ -70,7 +77,7 @@ function drawBoundingBoxes() {
 
     console.log("P:");
     console.log(p); 
-    
+
     drawBoundingBox(p);
     drawBoxLabel(p);
   }
@@ -79,41 +86,37 @@ function drawBoundingBoxes() {
 // --- Draw Review State ---
 function drawScannedFrame() {
   if (scannedFrame) {
-
-    console.log('Scanned frame drawn:', width, height);
-    image(scannedFrame, 0, 0, width, height);
+    // Draw the 512x512 scanned frame into the same square region as the live camera
+    let squareCanvasSize = Math.min(width, height);
+    let squareCanvasX = (width - squareCanvasSize) / 2;
+    let squareCanvasY = (height - squareCanvasSize) / 2;
+    image(scannedFrame, squareCanvasX, squareCanvasY, squareCanvasSize, squareCanvasSize);
   }
-}
-
-function getScreenDim() {
-    let sx, sy, sw, sh;
-    let camAspect = capture.width / capture.height;
-
-    if (camAspect > canvasAspect) {
-        sh = capture.height;
-        sw = sh * canvasAspect;
-        sx = (capture.width - sw) / 2;
-        sy = 0;
-    } else {
-        sw = capture.width;
-        sh = sw / canvasAspect;
-        sx = 0;
-        sy = (capture.height - sh) / 2;
-    }
-    return { sx, sy, sw, sh };
 }
 
 // --- Draw a Single Bounding Box ---
 function drawBoundingBox(p) {
-  const x = p.x - p.width / 2;
-  const y = p.y - p.height / 2;
-  rect(x, y, p.width, p.height);
+  // Assume p.x, p.y, p.width, p.height are relative to 512x512 image
+  // Scale to the square region on the canvas
+  let squareCanvasSize = Math.min(width, height);
+  let squareCanvasX = (width - squareCanvasSize) / 2;
+  let squareCanvasY = (height - squareCanvasSize) / 2;
+  const scale = squareCanvasSize / 512;
+  const x = squareCanvasX + (p.x - p.width / 2) * scale;
+  const y = squareCanvasY + (p.y - p.height / 2) * scale;
+  rect(x, y, p.width * scale, p.height * scale);
 }
 
 // --- Draw Label for a Box ---
 function drawBoxLabel(p) {
-  const x = p.x - p.width / 2;
-  const y = p.y - p.height / 2;
+  // Assume p.x, p.y, p.width, p.height are relative to 512x512 image
+  // Scale to the square region on the canvas
+  let squareCanvasSize = Math.min(width, height);
+  let squareCanvasX = (width - squareCanvasSize) / 2;
+  let squareCanvasY = (height - squareCanvasSize) / 2;
+  const scale = squareCanvasSize / 512;
+  const x = squareCanvasX + (p.x - p.width / 2) * scale;
+  const y = squareCanvasY + (p.y - p.height / 2) * scale;
   const label = `${p.class ?? p.label ?? "obj"} ${(p.confidence * 100 | 0)}%`;
   noStroke(); fill(0, 170);
   rect(x, y - 16, textWidth(label) + 10, 14, 4);
